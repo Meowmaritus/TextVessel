@@ -261,7 +261,7 @@
                 Background="#1C1C1C"
                 
                 ItemsSource="{Binding ElementName=MainTabs, 
-                Path=SelectedItem.Value.Chunks}"
+                Path=SelectedItem.Value.Entries}"
                 
                 ScrollViewer.CanContentScroll="False"
                 
@@ -286,55 +286,25 @@
                     <DataGridTemplateColumn>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Grid
-                            Margin="16"
-                            Focusable="False"
-                            >
-                                    <Label
-                                Content="{Binding}"
-                                FontWeight="Bold"
-                                />
-                                    <ListView
-                                ItemsSource="{Binding Entries}"
-                                ScrollViewer.CanContentScroll="False"
-                                Focusable="False"
-                                FocusVisualStyle="{x:Null}"
-                                >
-
-                                        <ListView.ItemContainerStyle>
-                                            <Style TargetType="ListViewItem">
-                                                <Setter Property="Focusable" Value="false"/>
-                                                <Setter Property="IsSelected" Value="False"/>
-                                            </Style>
-                                        </ListView.ItemContainerStyle>
-
-                                        <ListView.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock>
-                                            <Label 
-                                                Content="{Binding ID, Mode=OneWay}"
-                                                Margin="4"
-                                                Padding="0"
-                                                Height="20"
-                                                VerticalAlignment="Top"
-                                                VerticalContentAlignment="Top"
-                                                Foreground="White"
-                                                FontWeight="Normal"
-                                                />
-                                            <TextBox 
-                                                Text="{Binding Value}"
-                                                Margin="4"
-                                                Padding="2"
-                                                BorderBrush="White"
-                                                FontWeight="Normal"
-                                                />
-                                                </TextBlock>
-                                            </DataTemplate>
-                                        </ListView.ItemTemplate>
-
-                                    </ListView>
-                                </Grid>
-
+                                <TextBlock>
+                                    <Label 
+                                        Content="{Binding ID, Mode=OneWay}"
+                                        Margin="4"
+                                        Padding="0"
+                                        Height="20"
+                                        VerticalAlignment="Top"
+                                        VerticalContentAlignment="Top"
+                                        Foreground="White"
+                                        FontWeight="Normal"
+                                        />
+                                    <TextBox 
+                                        Text="{Binding Value}"
+                                        Margin="4"
+                                        Padding="2"
+                                        BorderBrush="White"
+                                        FontWeight="Normal"
+                                        />
+                                </TextBlock>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
