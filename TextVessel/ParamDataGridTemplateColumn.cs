@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace MeowsBetterParamEditor
+namespace TextVessel
 {
     public class ParamDataGridTemplateColumn : DataGridTemplateColumn
     {

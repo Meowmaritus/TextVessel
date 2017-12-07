@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
                     xmlns:Actions="clr-namespace:Selen.Wpf.SystemStyles.Actions;assembly=Selen.Wpf.SystemStyles"
-                    xmlns:meow="clr-namespace:MeowsBetterParamEditor">
+                    xmlns:meow="clr-namespace:TextVessel">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/Selen.Wpf.Core;component/Resources.xaml"/>
     </ResourceDictionary.MergedDictionaries>

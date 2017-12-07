@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MeowsBetterParamEditor.Properties
+namespace TextVessel.Properties
 {
 
 

@@ -97,8 +97,6 @@
     </Compile>
     <Compile Include="Extensions.cs" />
     <Compile Include="IOHelper.cs" />
-    <Compile Include="ParamCellEditTemplateSelector.cs" />
-    <Compile Include="ParamCellValueTemplateSelector.cs" />
     <Compile Include="ParamDataGridTemplateColumn.cs" />
     <Compile Include="TabControlEx.cs" />
     <Compile Include="UserConfig.cs" />
@@ -124,9 +122,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ParamDataContext.cs" />
+    <Compile Include="MainDataContext.cs" />
     <Compile Include="PARAMDEFRef.cs" />
-    <Compile Include="PARAMRef.cs" />
+    <Compile Include="FMGRef.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -144,7 +142,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="EmbeddedResources\paramdef.paramdefbnd" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

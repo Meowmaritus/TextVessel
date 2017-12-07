@@ -14,7 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace MeowsBetterParamEditor
+namespace TextVessel
 {
     /// <summary>
     /// Interaction logic for About.xaml

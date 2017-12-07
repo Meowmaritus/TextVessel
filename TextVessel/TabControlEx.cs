@@ -9,7 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 
-namespace MeowsBetterParamEditor
+namespace TextVessel
 {
     // Extended TabControl which saves the displayed item so you don't get the performance hit of 
     // unloading and reloading the VisualTree when switching tabs

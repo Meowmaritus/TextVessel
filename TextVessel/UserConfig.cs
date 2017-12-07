@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MeowsBetterParamEditor
+namespace TextVessel
 {
     public class UserConfig : INotifyPropertyChanged
     {
@@ -14,10 +14,10 @@ namespace MeowsBetterParamEditor
         private string _interrootPath = null;
 
         [JsonIgnore]
-        private Dictionary<string, int> _lastParamEntryIndices = new Dictionary<string, int>();
+        private int _lastMsgIndex = -1;
 
         [JsonIgnore]
-        private int _lastParamIndex = -1;
+        private string _language = "ENGLISH";
 
         public string InterrootPath
         {
@@ -26,50 +26,33 @@ namespace MeowsBetterParamEditor
             {
                 _interrootPath = value;
                 NotifyPropertyChanged(nameof(InterrootPath));
-                NotifyPropertyChanged(nameof(GameParamFolder));
-                NotifyPropertyChanged(nameof(DrawParamFolder));
-                NotifyPropertyChanged(nameof(ParamDefBndPath));
-                NotifyPropertyChanged(nameof(ParamFolder));
             }
         }
 
-
-        public Dictionary<string, int> LastParamEntryIndices
+        public int LastFmgIndex
         {
-            get => _lastParamEntryIndices;
+            get => _lastMsgIndex;
             set
             {
-                _lastParamEntryIndices = value;
-                NotifyPropertyChanged(nameof(LastParamEntryIndices));
+                _lastMsgIndex = value;
+                NotifyPropertyChanged(nameof(LastFmgIndex));
             }
         }
 
-        public int LastParamIndex
+        public string Language
         {
-            get => _lastParamIndex;
+            get => _language;
             set
             {
-                _lastParamIndex = value;
-                NotifyPropertyChanged(nameof(LastParamIndex));
+                _language = value;
+                NotifyPropertyChanged(nameof(Language));
             }
         }
 
-        [JsonIgnore]
-        public string GameParamFolder
-            => IOHelper.Frankenpath(InterrootPath, "param\\GameParam\\");
-
-        [JsonIgnore]
-        public string DrawParamFolder
-            => IOHelper.Frankenpath(InterrootPath, "param\\DrawParam\\");
-
-        [JsonIgnore]
-        public string ParamFolder
-            => IOHelper.Frankenpath(InterrootPath, "param\\");
-
-        [JsonIgnore]
-        public string ParamDefBndPath
-            => IOHelper.Frankenpath(InterrootPath, "paramdef\\paramdef.paramdefbnd");
-
+        public string GetMsgFolderForSelectedLanguage()
+        {
+            return IOHelper.Frankenpath(InterrootPath, "msg", Language);
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

@@ -22,7 +22,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace MeowsBetterParamEditor
+namespace TextVessel
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -34,7 +34,7 @@ namespace MeowsBetterParamEditor
             InitializeComponent();
 
             //DEBUG
-            //PARAMDATA.DEBUG_RestoreBackupsLoadResave();
+            //MAINDATA.DEBUG_RestoreBackupsLoadResave();
         }
 
         private void SetLoadingMode(bool isLoading)
@@ -77,9 +77,9 @@ namespace MeowsBetterParamEditor
                 var interrootDir = new FileInfo(browseDialog.FileName).DirectoryName;
                 if (CheckInterrotDirValid(interrootDir))
                 {
-                    PARAMDATA.Config.InterrootPath = interrootDir;
-                    PARAMDATA.SaveConfig();
-                    await PARAMDATA.LoadParamsInOtherThread(setIsLoading);
+                    MAINDATA.Config.InterrootPath = interrootDir;
+                    MAINDATA.SaveConfig();
+                    await MAINDATA.LoadFmgsInOtherThread(setIsLoading);
                 }
                 else
                 {
@@ -148,7 +148,7 @@ namespace MeowsBetterParamEditor
         //private void RANDOM_DEBUG_TESTING()
         //{
         //    //var uniqueInternalDataTypes = new List<string>();
-        //    //foreach (var p in PARAMDATA.ParamDefs)
+        //    //foreach (var p in MAINDATA.ParamDefs)
         //    //{
         //    //    string testDir = IOHelper.Frankenpath(Environment.CurrentDirectory, "VERBOSE_DUMP");
 
@@ -182,7 +182,7 @@ namespace MeowsBetterParamEditor
 
         //    var sb = new StringBuilder();
 
-        //    foreach (var p in PARAMDATA.Params)
+        //    foreach (var p in MAINDATA.Params)
         //    {
         //        int defSize = p.Value.AppliedPARAMDEF.CalculateEntrySize();
 
@@ -203,86 +203,14 @@ namespace MeowsBetterParamEditor
         //    Console.WriteLine();
         //}
 
-        public PARAM SelectedParam
+        public FMG SelectedFmg
         {
             get
             {
                 if (MainTabs.SelectedValue != null)
-                    return (MainTabs.SelectedItem as PARAMRef).Value;
+                    return (MainTabs.SelectedItem as FMGRef).Value;
                 else
                     return null;
-            }
-        }
-
-        private void UltraSuperMegaDataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
-        {
-
-        }
-
-        private void UltraSuperMegaDataGrid_Loaded(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void CopyJPText_Click(object sender, RoutedEventArgs e)
-        {
-            var sb = new StringBuilder();
-
-            if (ParamManStyleDataGrid.SelectedItems.Count > 1)
-            {
-                for (int i = 0; i < ParamManStyleDataGrid.SelectedItems.Count; i++)
-                {
-                    if (i > 0)
-                        sb.AppendLine();
-                    var cell = (ParamCellValueRef)ParamManStyleDataGrid.SelectedItems[i];
-                    sb.AppendLine(cell.Def.Name);
-                    AppendCellInfoToStringBuilder(cell, sb, jpTextOnly: true, indentPrefix: "\t");
-                }
-            }
-            else
-            {
-                AppendCellInfoToStringBuilder((sender as MenuItem).DataContext as ParamCellValueRef, sb, jpTextOnly: true);
-            }
-
-            Clipboard.SetText(sb.ToString());
-        }
-
-        private void CopyAllInfo_Click(object sender, RoutedEventArgs e)
-        {
-            var sb = new StringBuilder();
-
-            if (ParamManStyleDataGrid.SelectedItems.Count > 1)
-            {
-                for (int i = 0; i < ParamManStyleDataGrid.SelectedItems.Count; i++)
-                {
-                    if (i > 0)
-                        sb.AppendLine();
-                    var cell = (ParamCellValueRef)ParamManStyleDataGrid.SelectedItems[i];
-                    sb.AppendLine(cell.Def.Name);
-                    AppendCellInfoToStringBuilder(cell, sb, jpTextOnly: false, indentPrefix: "\t");
-                }
-            }
-            else
-            {
-                AppendCellInfoToStringBuilder((sender as MenuItem).DataContext as ParamCellValueRef, sb, jpTextOnly: false);
-            }
-
-            Clipboard.SetText(sb.ToString());
-        }
-
-        private void AppendCellInfoToStringBuilder(ParamCellValueRef cell, StringBuilder sb, bool jpTextOnly, string indentPrefix = "")
-        {
-            sb.AppendLine($"{indentPrefix}{cell.Def.DisplayName}:");
-            sb.AppendLine($"{indentPrefix}{cell.Def.Description}");
-            if (!jpTextOnly)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"{indentPrefix}Min: {cell.Def.Min}");
-                sb.AppendLine($"{indentPrefix}Max: {cell.Def.Max}");
-                sb.AppendLine($"{indentPrefix}Default: {cell.Def.DefaultValue}");
-                sb.AppendLine($"{indentPrefix}Incrementation: {cell.Def.Increment}");
-                sb.AppendLine($"{indentPrefix}Internal Value Type: {cell.Def.InternalValueType}");
-                sb.AppendLine($"{indentPrefix}PARAM MAN Value Display Format: \"{cell.Def.GuiValueStringFormat}\"");
             }
         }
 
@@ -291,27 +219,13 @@ namespace MeowsBetterParamEditor
             await BrowseForInterrootDialog(SetLoadingMode);
         }
 
-        private void ParamEntryList_AddingNewItem(object sender, AddingNewItemEventArgs e)
-        {
-            var row = new ParamRow();
-
-            row.Name = "New Entry";
-            row.ReInitRawData(SelectedParam);
-            row.LoadValuesFromRawData(SelectedParam);
-            row.SaveDefaultValuesToRawData(SelectedParam);
-
-            e.NewItem = row;
-
-
-        }
-
         private async void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            PARAMDATA.LoadConfig();
+            MAINDATA.LoadConfig();
 
-            if (!string.IsNullOrWhiteSpace(PARAMDATA.Config?.InterrootPath))
+            if (!string.IsNullOrWhiteSpace(MAINDATA.Config?.InterrootPath))
             {
-                await PARAMDATA.LoadParamsInOtherThread(SetLoadingMode);
+                await MAINDATA.LoadFmgsInOtherThread(SetLoadingMode);
             }
             else
             {
@@ -340,51 +254,27 @@ namespace MeowsBetterParamEditor
 
         private async void CmdSave_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            await PARAMDATA.SaveInOtherThread(SetSavingMode);
+            await MAINDATA.SaveInOtherThread(SetSavingMode);
         }
 
         private void SaveParamRowIndex()
         {
-            var selectedParam = (MainTabs.SelectedItem as PARAMRef);
+            var selectedParam = (MainTabs.SelectedItem as FMGRef);
 
             if (selectedParam == null)
                 return;
 
-            var selectedParamEntry = ParamEntryList.SelectedItem as ParamRow;
-
-            if (selectedParamEntry == null)
-                return;
-
-            var selIndex = selectedParam.Value.Entries.IndexOf(selectedParamEntry);
-
-            if (selIndex >= 0)
-            {
-                if (PARAMDATA.Config.LastParamEntryIndices.ContainsKey(selectedParam.Key))
-                {
-                    PARAMDATA.Config.LastParamEntryIndices[selectedParam.Key] = selIndex;
-                }
-                else
-                {
-                    PARAMDATA.Config.LastParamEntryIndices.Add(selectedParam.Key, selIndex);
-                }
-            }
+            //TODO: SaveParamRowIndex
         }
 
         private void LoadParamRowIndex()
         {
-            var selectedParam = (MainTabs.SelectedItem as PARAMRef);
+            var selectedParam = (MainTabs.SelectedItem as FMGRef);
 
             if (selectedParam == null)
                 return;
 
-            if (PARAMDATA.Config.LastParamEntryIndices.ContainsKey(selectedParam.Key)
-                && PARAMDATA.Config.LastParamEntryIndices[selectedParam.Key] >= 0
-                && PARAMDATA.Config.LastParamEntryIndices[selectedParam.Key] < ParamEntryList.Items.Count)
-            {
-                ParamEntryList.SelectedIndex = PARAMDATA.Config.LastParamEntryIndices[selectedParam.Key];
-
-                ParamEntryList.ScrollIntoView(ParamEntryList.SelectedItem);
-            }
+            //TODO: LoadParamRowIndex
         }
 
         private void ParamEntryList_CurrentCellChanged(object sender, EventArgs e)
@@ -397,7 +287,7 @@ namespace MeowsBetterParamEditor
             if (MainTabs == null)
                 return;
 
-            PARAMDATA.Config.LastParamIndex = MainTabs.SelectedIndex;
+            MAINDATA.Config.LastFmgIndex = MainTabs.SelectedIndex;
 
             LoadParamRowIndex();
         }
@@ -424,18 +314,18 @@ namespace MeowsBetterParamEditor
             //TODO: Use e.Cancel, asking user if they wanna save changes and all that
 
             //Even if the user decides not to save the params, always save the config:
-            PARAMDATA.SaveConfig();
+            MAINDATA.SaveConfig();
         }
 
         private void MainTabs_TargetUpdated(object sender, DataTransferEventArgs e)
         {
             SetLoadingMode(false);
-            MainTabs.SelectedIndex = PARAMDATA.Config.LastParamIndex;
+            MainTabs.SelectedIndex = MAINDATA.Config.LastFmgIndex;
         }
 
         private async void MenuRestoreBackups_Click(object sender, RoutedEventArgs e)
         {
-            await PARAMDATA.RestoreBackupsInOtherThread(SetLoadingMode);
+            await MAINDATA.RestoreBackupsInOtherThread(SetLoadingMode);
         }
 
         private void ParamManStyleDataGrid_KeyDown(object sender, KeyEventArgs e)
@@ -450,47 +340,5 @@ namespace MeowsBetterParamEditor
             about.ShowDialog();
         }
 
-        private void MenuPatchParamDefs_Click(object sender, RoutedEventArgs e)
-        {
-            if (MessageBox.Show("This modification will replace the Japanese display names of the variables" +
-                " in the ParamDefs with their internal variable names, which are in English. " +
-                "\nThese display names are used in the Dark Souls debug menu's '[PARAM MAN]' submenu. " +
-                "\nNo more blindly adjusting Japanese-named variables." +
-                "\n\nThis would modify the './paramdef/paramdef.paramdefbnd' file only. " +
-                "\nA backup ('./paramdef/paramdef.paramdefbnd.bak') will be created before the modification is made." +
-                "\n\nProceed with modification?", "Apply Modification?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {
-                if (!File.Exists(PARAMDATA.Config.ParamDefBndPath + ".bak"))
-                {
-                    File.Copy(PARAMDATA.Config.ParamDefBndPath, PARAMDATA.Config.ParamDefBndPath + ".bak");
-                }
-
-                try
-                {
-                    PARAMDATA.ApplyParamDefEnglishPatch();
-
-                    MessageBox.Show("Modification applied successfully.");
-                }
-                catch (Exception ex)
-                {
-                    if (File.Exists(PARAMDATA.Config.ParamDefBndPath + ".bak"))
-                    {
-                        File.Copy(PARAMDATA.Config.ParamDefBndPath + ".bak", PARAMDATA.Config.ParamDefBndPath, true);
-                        MessageBox.Show("An error occurred while modifying the file (shown below). " +
-                            "The file has been restored to a backup of its original state." + "\n\n" + ex.Message);
-                    }
-                    else
-                    {
-                        DataFile.SaveToFile(PARAMDATA.PARAMDEFBND, PARAMDATA.Config.ParamDefBndPath, null);
-
-                        MessageBox.Show("An error occurred while modifying the file (shown below). " +
-                            "The backup of the file's original state could not be retrieved. " +
-                            "The file has been replaced with the default vanilla file." + "\n\n" + ex.Message);
-                    }
-                }
-
-
-            }
-        }
     }
 }
