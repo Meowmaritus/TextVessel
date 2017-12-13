@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using TextVessel.Credits;
 
 namespace TextVessel
 {
@@ -31,9 +32,25 @@ namespace TextVessel
             Close();
         }
 
-        private void DonateHyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
-            Process.Start(DonateHyperlink.NavigateUri.ToString());
+            Process.Start((sender as Hyperlink).NavigateUri.ToString());
+        }
+
+        private void ViewLicenseButton_Click(object sender, RoutedEventArgs e)
+        {
+            var cred = ((sender as Button).DataContext as CreditDef);
+
+            using (var stream = typeof(About).Assembly.GetManifestResourceStream(cred.EmbeddedLicenseFilename))
+            {
+                var aboutLicense = new AboutLicense();
+
+                aboutLicense.Owner = this;
+
+                aboutLicense.CredStream = stream;
+
+                aboutLicense.ShowDialog();
+            }
         }
     }
 }

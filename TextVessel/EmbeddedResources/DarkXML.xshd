@@ -1,0 +1,22 @@
+﻿<SyntaxDefinition name="XML" extensions=".xml;.xsl;.xslt;.xsd;.manifest;.config;.addin;.xshd;.wxs;.wxi;.wxl;.proj;.csproj;.vbproj;.ilproj;.booproj;.build;.xfrm;.targets;.xaml;.xpt;.xft;.map;.wsdl;.disco;.ps1xml;.nuspec" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <Color foreground="DeepSkyBlue" name="XmlDeclaration" exampleText='&lt;?xml version="1.0"?&gt;' />
+  <Color foreground="GreenYellow " name="NullStringDef" exampleText="&lt;null&gt;" />
+  <Color foreground="Salmon" name="EmptyStringDef" exampleText="&lt;empty&gt;" />
+
+  <RuleSet>
+    <Span color="XmlDeclaration" multiline="true">
+      <Begin>&lt;\?</Begin>
+      <End>\?&gt;</End>
+    </Span>
+    <Import ruleSet="EntitySet"/>
+  </RuleSet>
+
+  <RuleSet name="EntitySet">
+    <Rule color="NullStringDef">
+      ^[^\S]*&lt;null&gt;[^\S]*$
+    </Rule>
+    <Rule color="EmptyStringDef">
+      ^[^\S]*&lt;empty&gt;[^\S]*$
+    </Rule>
+  </RuleSet>
+</SyntaxDefinition>

@@ -13,6 +13,8 @@ namespace TextVessel
         public FMG Value { get; set; } = null;
         public string BNDName { get; set; } = null;
 
+        public string TranslatedName { get; set; } = null;
+
         public FMGRef() { }
 
         public FMGRef(string Key, FMG Value, string BNDName)

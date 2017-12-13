@@ -7,15 +7,21 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local="clr-namespace:TextVessel"
     mc:Ignorable="d"
-    Title="About ParamVessel" 
-    Width="439.332" 
-    Height="256" 
+    Title="About" 
+    Width="554.332" 
+    Height="440" 
     ResizeMode="NoResize" 
     ShowInTaskbar="False" 
-    Topmost="True" 
     WindowStartupLocation="CenterOwner" 
-    Background="#1C1C1C" 
+    Background="{StaticResource Background}" 
+    BorderThickness="1"
+    BorderBrush="{StaticResource BorderBrushNormal}"
     >
+
+    <controls:MetroWindow.DataContext>
+        <local:AboutDataContext x:Name="context"/>
+    </controls:MetroWindow.DataContext>
+    
     <Grid Margin="8">
         <Image 
             Source="Resources/Soul_Vessel.ico" 
@@ -27,16 +33,21 @@
         <Button 
             x:Name="OkButton" 
             Content="OK"
-            Click="OkButton_Click" VerticalAlignment="Bottom" HorizontalAlignment="Right" Height="20" Width="64"
+            Click="OkButton_Click" 
+            VerticalAlignment="Bottom" 
+            HorizontalAlignment="Right" 
+            Height="20" 
+            Width="64"
             />
         <RichTextBox
-            Margin="37,0,0,20"
+            Margin="40,0,40,20"
             IsReadOnly="True"
-            Background="#1C1C1C" 
-            Foreground="White"
+            Background="{StaticResource Background}" 
+            Foreground="{StaticResource Foreground}"
             BorderBrush="Transparent"
             IsDocumentEnabled="True"
             BorderThickness="0"
+            HorizontalAlignment="Stretch"
             >
             <FlowDocument>
                 <FlowDocument.Blocks>
@@ -52,14 +63,137 @@
                     <Paragraph Margin="8">
                         Special thanks to Wulf2k9
                     </Paragraph>
-                    <Paragraph>
-                        <TextBlock TextWrapping="WrapWithOverflow">
-                            <Run Text="Utilizes"/>
-                            <Run 
-                                Text="MeowDSIO"
-                                FontWeight="Bold"/><Run 
-                                Text=", the Dark Souls IO Library also by Meowmaritus"/>
-                        </TextBlock>
+                    <Paragraph Margin="8,16,8,0">
+                        <Label 
+                            Content="Licenses:"
+                            Foreground="{StaticResource Foreground}"
+                            FontWeight="Bold"
+                            FontSize="14"
+                            Margin="0"
+                            Padding="0"
+                            />
+                    </Paragraph>
+                    <Paragraph Margin="8,4,0,0">
+                        <ListView
+                            ItemsSource="{Binding Credits}"
+                            Background="Transparent"
+                            Foreground="{StaticResource Foreground}"
+                            Height="200"
+                            Margin="0"
+                            
+                            >
+
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid
+                                        Width="400"
+                                        Margin="2"
+                                        >
+
+                                        <Border
+                                            BorderThickness="1"
+                                            BorderBrush="{StaticResource BorderBrushNormal}"
+                                            >
+                                            <Grid
+                                                Background="Transparent"
+                                                Margin="8"
+                                                >
+
+
+
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition/>
+                                                    <RowDefinition/>
+                                                    <RowDefinition/>
+                                                    <RowDefinition/>
+                                                </Grid.RowDefinitions>
+
+                                                <TextBlock
+                                                Grid.Row="0"
+                                                >
+                                                <Hyperlink
+                                                
+                                                    Foreground="LightSkyBlue"
+                                                    NavigateUri="{Binding ProjectURL}"
+                                                    Hyperlink.RequestNavigate="Hyperlink_RequestNavigate"
+                                                    >
+                                                    <Hyperlink.Inlines>
+                                                        <Run Text="{Binding ProjectDispName}"/>
+                                                    </Hyperlink.Inlines>
+                                                </Hyperlink>
+                                                </TextBlock>
+
+                                                <!--<ListViewItem>
+                                                <Label 
+                                                    Content="{Binding ProjectInternalName}"
+                                                    Margin="0"
+                                                    Padding="4,0,0,0"
+                                                    Foreground="{StaticResource Foreground}"
+                                                    FontSize="12"
+                                                    Opacity="0.5"
+                                                    FontFamily="Consolas"
+                                                    />
+                                            </ListViewItem>-->
+                                                <Label
+                                                    Grid.Row="1"
+                                                    Content="{Binding Purpose}"
+                                                    Foreground="{StaticResource Foreground}"
+                                                    FontStyle="Italic"
+                                                    />
+                                                <Separator Grid.Row="2"/>
+                                                <Grid
+                                                Grid.Row="3"
+                                                    Width="380"
+                                                    >
+                                                    <Grid 
+                                                        Width="140"
+                                                        HorizontalAlignment="Right"
+                                                        >
+
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="50"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="48"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <Label 
+                                                        Content="License:"
+                                                        Grid.Column="0"
+                                                        Foreground="{StaticResource Foreground}"
+                                                        Margin="0"
+                                                        Padding="0"
+                                                        VerticalAlignment="Stretch"
+                                                        VerticalContentAlignment="Center"
+                                                        FontWeight="Bold"
+                                                        />
+
+                                                        <Label 
+                                                        Content="{Binding LicenseName}"
+                                                        Grid.Column="1"
+                                                        Foreground="{StaticResource Foreground}"
+                                                        Margin="0"
+                                                        Padding="0"
+                                                        VerticalAlignment="Stretch"
+                                                        VerticalContentAlignment="Center"
+                                                        />
+
+                                                        <Button
+                                                            Content="View"
+                                                            Grid.Column="2"
+                                                            Click="ViewLicenseButton_Click"
+                                                            />
+                                                    </Grid>
+                                                </Grid>
+                                            </Grid>
+                                        </Border>
+                                        
+                                        
+                                        
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                            
+                        </ListView>
                     </Paragraph>
                     <Paragraph
                         Padding="0,24,0,16"
@@ -69,7 +203,7 @@
                             x:Name="DonateHyperlink"
                             IsEnabled="True"
                             NavigateUri="https://www.paypal.me/Meowmaritus"
-                            RequestNavigate="DonateHyperlink_RequestNavigate"
+                            RequestNavigate="Hyperlink_RequestNavigate"
                             Foreground="PaleGreen"
                             >
                             https://www.paypal.me/Meowmaritus

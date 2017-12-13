@@ -6,17 +6,19 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
-            <!--<ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Styles/Colors.xaml" />
-                <ResourceDictionary Source="Styles/Brushes.xaml" />
-                <ResourceDictionary Source="Styles/DarkScrollBars.xaml" />
-                <ResourceDictionary Source="Styles/DarkMenu.xaml" />
-            </ResourceDictionary.MergedDictionaries>-->
+
+            <sys:String x:Key="Version">Text Vessel - Version 1.0</sys:String>
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Selen.Wpf.SystemStyles;component/Styles.xaml"/>
+                
                 <ResourceDictionary Source="Styles/MetroLuaTabs.xaml"/>
+                <ResourceDictionary Source="Styles/AvalonEditStyle.xaml"/>
+                <ResourceDictionary Source="Styles/FmgTabItemStyle.xaml"/>
+
+                <ResourceDictionary Source="Styles/AllBrushes.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <sys:String x:Key="Version">Text Vessel - Version 1.0</sys:String>
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>

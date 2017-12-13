@@ -1,11 +1,13 @@
 ﻿using MahApps.Metro.Controls;
 using MeowDSIO;
 using MeowDSIO.DataFiles;
+using MeowDSIO.DataTypes.FMG;
 using MeowDSIO.DataTypes.PARAM;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -29,35 +31,147 @@ namespace TextVessel
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
+        private object __ctrlSync = new object();
+        private bool _ctrl = false;
+
+        public bool Ctrl
+        {
+            get
+            {
+                bool res = false;
+                lock (__ctrlSync)
+                {
+                    res = _ctrl;
+                }
+                return res;
+            }
+
+            set
+            {
+                lock (__ctrlSync)
+                {
+                    _ctrl = value;
+                }
+            }
+        }
+
+        private object __needsScrollSync = new object();
+        private bool _needsScroll = false;
+
+        public bool NeedsScroll
+        {
+            get
+            {
+                bool res = false;
+                lock (__needsScrollSync)
+                {
+                    res = _needsScroll;
+                }
+                return res;
+            }
+
+            set
+            {
+                lock (__needsScrollSync)
+                {
+                    _needsScroll = value;
+                }
+            }
+        }
+
+        private async void MetroWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            context.MainListViewVisibility = Visibility.Hidden;
+
+            Border fmgListBorder = (Border)VisualTreeHelper.GetChild(MainListView, 0);
+            FmgScrollViewer = (ScrollViewer)VisualTreeHelper.GetChild(fmgListBorder, 0);
+
+            context.LoadConfig();
+
+            if (!string.IsNullOrWhiteSpace(context.Config?.InterrootPath))
+            {
+                await context.LoadFmgsInOtherThread(SetWait);
+            }
+            else
+            {
+                if (MessageBox.Show("Note: A Dark Souls installation unpacked by the mod " +
+                    "'UnpackDarkSoulsForModding' by HotPocketRemix is >>>REQUIRED<<<." +
+                    "\n" +
+                    @"Please navigate to your '.\DATA\DARKSOULS.exe' file." +
+                    "Once the inital setup is performed, the path will be saved." +
+                    "\nYou may press cancel to continue without selecting the path but the GUI will " +
+                    "be blank until you go to 'File -> Select Dark Souls Directory...'",
+                    "Initial Setup", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                {
+                    await BrowseForInterrootDialog(SetWait);
+                }
+            }
+
+            context.PropertyChanged += Context_PropertyChanged;
+
+            DataLanguageListBox.SelectedItem = context.DataLanguage;
+        }
+
+        private void Context_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(context.SelectedFMG))
+            {
+                NeedsScroll = true;
+            }
+        }
+
+        public static readonly DependencyProperty WaitAnimProgressProperty =
+            DependencyProperty.Register(nameof(WaitAnimProgress), typeof(double), typeof(MainWindow),
+                new PropertyMetadata(WaitAnimProgressCallback));
+
+        public double WaitAnimProgress
+        {
+            get => (double)GetValue(WaitAnimProgressProperty);
+            set => SetValue(WaitAnimProgressProperty, value);
+        }
+
+        static void WaitAnimProgressCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var contextInstance = (d.GetValue(DataContextProperty) as MainDataContext);
+            if (contextInstance != null)
+            {
+                if (e.Property == WaitAnimProgressProperty)
+                    contextInstance.WaitAnimProgress = (double)e.NewValue;
+            }
+        }
+
+        public ScrollViewer FmgScrollViewer = null;
+
         public MainWindow()
         {
             InitializeComponent();
 
             //DEBUG
-            //MAINDATA.DEBUG_RestoreBackupsLoadResave();
+            //context.DEBUG_RestoreBackupsLoadResave();
+
+            context.LoadSyntaxHighlighting();
         }
 
-        private void SetLoadingMode(bool isLoading)
+        public async Task SetWait(string waitingActionDescription)
         {
-            MainGrid.Opacity = isLoading ? 0.25 : 1;
-            MainGrid.IsEnabled = !isLoading;
+            if (waitingActionDescription != null)
+            {
+                while (context.IsAnimWait)
+                {
+                    await Task.Delay(100);
+                }
 
-            LoadingTextBox.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+                context.WaitText = waitingActionDescription;
+                context.WaitAnimProgress = 0;
+            }
 
-            Mouse.OverrideCursor = isLoading ? Cursors.Wait : null;
+            context.IsWait = waitingActionDescription != null;
+            MainGrid.IsHitTestVisible = !context.IsWait;
+
+            Mouse.OverrideCursor = context.IsWait ? Cursors.Wait : null;
         }
 
-        private void SetSavingMode(bool isLoading)
-        {
-            MainGrid.Opacity = isLoading ? 0.25 : 1;
-            MainGrid.IsEnabled = !isLoading;
-
-            SavingTextBox.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
-
-            Mouse.OverrideCursor = isLoading ? Cursors.Wait : null;
-        }
-
-        private async Task BrowseForInterrootDialog(Action<bool> setIsLoading)
+        private async Task BrowseForInterrootDialog(Func<string, Task> setWait)
         {
             var browseDialog = new OpenFileDialog()
             {
@@ -77,9 +191,9 @@ namespace TextVessel
                 var interrootDir = new FileInfo(browseDialog.FileName).DirectoryName;
                 if (CheckInterrotDirValid(interrootDir))
                 {
-                    MAINDATA.Config.InterrootPath = interrootDir;
-                    MAINDATA.SaveConfig();
-                    await MAINDATA.LoadFmgsInOtherThread(setIsLoading);
+                    context.Config.InterrootPath = interrootDir;
+                    context.SaveConfig();
+                    await context.LoadFmgsInOtherThread(setWait);
                 }
                 else
                 {
@@ -145,168 +259,24 @@ namespace TextVessel
                 File.Exists(IOHelper.Frankenpath(dir, @"paramdef\paramdef.paramdefbnd"));
         }
 
-        //private void RANDOM_DEBUG_TESTING()
-        //{
-        //    //var uniqueInternalDataTypes = new List<string>();
-        //    //foreach (var p in MAINDATA.ParamDefs)
-        //    //{
-        //    //    string testDir = IOHelper.Frankenpath(Environment.CurrentDirectory, "VERBOSE_DUMP");
-
-        //    //    if (!Directory.Exists(testDir))
-        //    //        Directory.CreateDirectory(testDir);
-
-        //    //    string testFileName = IOHelper.Frankenpath(testDir, p.Key + ".txt");
-
-        //    //    var sb = new StringBuilder();
-
-        //    //    foreach (var e in p.Value.Entries)
-        //    //    {
-        //    //        sb.AppendLine($"{e.Name}:");
-        //    //        sb.AppendLine($"\tID: {e.ID}");
-        //    //        sb.AppendLine($"\tInternal Value Type: {e.InternalValueType}");
-        //    //        sb.AppendLine($"\tDefault: {e.DefaultValue}");
-        //    //        sb.AppendLine($"\t[PARAM MAN] Display Name: {e.DisplayName}:");
-        //    //        sb.AppendLine($"\t[PARAM MAN] Description: {e.Description}");
-        //    //        sb.AppendLine($"\t[PARAM MAN] Min: {e.Min}");
-        //    //        sb.AppendLine($"\t[PARAM MAN] Max: {e.Max}");
-        //    //        sb.AppendLine($"\t[PARAM MAN] Incrementation: {e.Increment}");
-        //    //        sb.AppendLine($"\t[PARAM MAN] GUI Value Format: \"{e.GuiValueStringFormat}\"");
-        //    //        sb.AppendLine($"\t[PARAM MAN] GUI Value Type: {e.GuiValueType}");
-        //    //        sb.AppendLine($"\t[PARAM MAN] GUI Value Mode: {e.GuiValueDisplayMode}");
-        //    //        sb.AppendLine($"\t[PARAM MAN] GUI Value Size: {e.GuiValueByteCount}");
-        //    //        sb.AppendLine();
-        //    //    }
-
-        //    //    File.WriteAllText(testFileName, sb.ToString());
-        //    //}
-
-        //    var sb = new StringBuilder();
-
-        //    foreach (var p in MAINDATA.Params)
-        //    {
-        //        int defSize = p.Value.AppliedPARAMDEF.CalculateEntrySize();
-
-        //        if (p.Value._debug_calculatedEntrySize != defSize)
-        //        {
-        //            sb.AppendLine($"Entry size check fail - {p.BNDName} - {p.Value.Name} - {p.Value._debug_calculatedEntrySize} (Def: {defSize})");
-
-        //            //foreach (var e in p.Value.AppliedPARAMDEF.Entries)
-        //            //{
-
-        //            //    sb.AppendLine($"\tDef Entry size check fail ({e.Name}) - BitCount = {e.ValueBitCount}, DispVarBytes*8 = {(e.GuiValueByteCount * 8)}");
-        //            //}
-        //        }
-        //    }
-
-        //    Console.WriteLine(sb.ToString());
-
-        //    Console.WriteLine();
-        //}
-
-        public FMG SelectedFmg
-        {
-            get
-            {
-                if (MainTabs.SelectedValue != null)
-                    return (MainTabs.SelectedItem as FMGRef).Value;
-                else
-                    return null;
-            }
-        }
-
         private async void MenuSelectDarkSoulsDirectory_Click(object sender, RoutedEventArgs e)
         {
-            await BrowseForInterrootDialog(SetLoadingMode);
-        }
-
-        private async void MetroWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            MAINDATA.LoadConfig();
-
-            if (!string.IsNullOrWhiteSpace(MAINDATA.Config?.InterrootPath))
-            {
-                await MAINDATA.LoadFmgsInOtherThread(SetLoadingMode);
-            }
-            else
-            {
-                if (MessageBox.Show("Note: A Dark Souls installation unpacked by the mod " +
-                    "'UnpackDarkSoulsForModding' by HotPocketRemix is >>>REQUIRED<<<." +
-                    "\n" +
-                    @"Please navigate to your '.\DATA\DARKSOULS.exe' file." +
-                    "Once the inital setup is performed, the path will be saved." +
-                    "\nYou may press cancel to continue without selecting the path but the GUI will " +
-                    "be blank until you go to 'File -> Select Dark Souls Directory...'",
-                    "Initial Setup", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
-                {
-                    await BrowseForInterrootDialog(SetLoadingMode);
-                }
-            }
-
-            MainTabs.Items.Refresh();
-
-            //RANDOM_DEBUG_TESTING();
+            await BrowseForInterrootDialog(SetWait);
         }
 
         private void CmdSave_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = true;
+            e.CanExecute = (!context.IsWait && context.IsModified);
         }
 
         private async void CmdSave_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            await MAINDATA.SaveInOtherThread(SetSavingMode);
-        }
-
-        private void SaveParamRowIndex()
-        {
-            var selectedParam = (MainTabs.SelectedItem as FMGRef);
-
-            if (selectedParam == null)
-                return;
-
-            //TODO: SaveParamRowIndex
-        }
-
-        private void LoadParamRowIndex()
-        {
-            var selectedParam = (MainTabs.SelectedItem as FMGRef);
-
-            if (selectedParam == null)
-                return;
-
-            //TODO: LoadParamRowIndex
-        }
-
-        private void ParamEntryList_CurrentCellChanged(object sender, EventArgs e)
-        {
-            SaveParamRowIndex();
+            await context.SaveInOtherThread(SetWait);
         }
 
         private void MainTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (MainTabs == null)
-                return;
-
-            MAINDATA.Config.LastFmgIndex = MainTabs.SelectedIndex;
-
-            LoadParamRowIndex();
-        }
-
-        private void ParamEntryList_SourceUpdated(object sender, DataTransferEventArgs e)
-        {
-            LoadParamRowIndex();
-
-            //SetLoadingMode(false);
-        }
-
-        private void ParamEntryList_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
-        {
-            SaveParamRowIndex();
-        }
-
-        private void ParamEntryList_TargetUpdated(object sender, DataTransferEventArgs e)
-        {
-            
+            context.Config.LastFmgIndex = MainTabs.SelectedIndex;
         }
 
         private void MetroWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -314,23 +284,23 @@ namespace TextVessel
             //TODO: Use e.Cancel, asking user if they wanna save changes and all that
 
             //Even if the user decides not to save the params, always save the config:
-            MAINDATA.SaveConfig();
+            context.SaveConfig();
         }
 
         private void MainTabs_TargetUpdated(object sender, DataTransferEventArgs e)
         {
-            SetLoadingMode(false);
-            MainTabs.SelectedIndex = MAINDATA.Config.LastFmgIndex;
+            MainTabs.SelectedIndex = -1;
+            MainTabs.SelectedIndex = context.Config.LastFmgIndex;
         }
 
         private async void MenuRestoreBackups_Click(object sender, RoutedEventArgs e)
         {
-            await MAINDATA.RestoreBackupsInOtherThread(SetLoadingMode);
-        }
-
-        private void ParamManStyleDataGrid_KeyDown(object sender, KeyEventArgs e)
-        {
-
+            if (MessageBox.Show($"Are you sure you want to restore the backups for " +
+                $"all {context.DataLanguage.EngName} text files, losing any custom edits done?",
+                "Restore Backups?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                await context.RestoreBackupsInOtherThread(SetWait);
+            }
         }
 
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
@@ -340,5 +310,246 @@ namespace TextVessel
             about.ShowDialog();
         }
 
+        private void CodeEditor_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            var ce = (sender as CodeEditor);
+
+            ce.TextArea.ClearSelection();
+
+            MainListView.SelectedIndex = -1;
+        }
+
+        private void CodeEditor_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var ce = (sender as CodeEditor);
+
+            ce.TextArea.ClearSelection();
+        }
+
+        private void SaveCurrentFmgScrollOffset()
+        {
+            if (MainListView == null)
+                return;
+
+            if (MainTabs.SelectedItem is FMGRef fmg)
+            {
+                if (context.Config.LastFmgScrollOffsets.ContainsKey(fmg.Key))
+                    context.Config.LastFmgScrollOffsets[fmg.Key] = FmgScrollViewer.VerticalOffset;
+                else
+                    context.Config.LastFmgScrollOffsets.Add(fmg.Key, FmgScrollViewer.VerticalOffset);
+            }
+        }
+
+        private void LoadCurrentFmgScrollOffset()
+        {
+            if (MainListView == null)
+                return;
+
+            if (MainTabs.SelectedItem is FMGRef fmg)
+            {
+                if (context.Config.LastFmgScrollOffsets.ContainsKey(fmg.Key))
+                    FmgScrollViewer?.ScrollToVerticalOffset(context.Config.LastFmgScrollOffsets[fmg.Key]);
+            }
+        }
+
+        private async void MainListView_TargetUpdated(object sender, DataTransferEventArgs e)
+        {
+            if (e.Property.Name == nameof(MainListView.ItemsSource))
+            {
+                await SetWait(null);
+            }
+        }
+
+        private void MainTabs_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            SaveCurrentFmgScrollOffset();
+        }
+
+        private async void DataLanguageListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (context.DataLanguage != context.CurrentlyLoadedLanguage)
+            {
+                if (context.IsModified)
+                {
+                    var msgResult = MessageBox.Show($"Would you like to save all unsaved " +
+                        $"changes to the FMG files for the " +
+                        $"current language, {context.CurrentlyLoadedLanguage.EngName}, " +
+                        $"before switching to the selected " +
+                        $"language, {context.DataLanguage.EngName}?",
+                        "Keep Unsaved Changes?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+
+                    if (msgResult == MessageBoxResult.Cancel)
+                    {
+                        await Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle,
+                            new Action(() =>
+                            {
+                                DataLanguageListBox.SelectionChanged -= DataLanguageListBox_SelectionChanged;
+                                context.DataLanguage = context.CurrentlyLoadedLanguage;
+                                DataLanguageListBox.SelectionChanged += DataLanguageListBox_SelectionChanged;
+                            }));
+                        
+                        return;
+                    }
+                    else
+                    {
+                        if (msgResult == MessageBoxResult.Yes)
+                        {
+                            await context.SaveInOtherThread(SetWait);
+                        }
+
+                        await context.LoadFmgsInOtherThread(SetWait);
+                    }
+                }
+                else
+                {
+                    await context.LoadFmgsInOtherThread(SetWait);
+                }
+
+            }
+        }
+
+        private void MetroWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (IsKeyboardFocusWithin && e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
+            {
+                Ctrl = true;
+            }
+        }
+
+        private void MetroWindow_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (IsKeyboardFocusWithin && e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl)
+            {
+                Ctrl = false;
+            }
+        }
+
+        private void MainListView_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (Ctrl && IsKeyboardFocusWithin)
+            {
+                if (e.Delta > 0)
+                    context.Zoom.ZoomLevel++;
+                else
+                    context.Zoom.ZoomLevel--;
+
+                e.Handled = true;
+            }
+        }
+
+        private void CmdZoomIn_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            context.Zoom.ZoomLevel++;
+        }
+
+        private void CmdZoomOut_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            context.Zoom.ZoomLevel--;
+        }
+
+        private void CmdZoomReset_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            context.Zoom.ZoomLevel = 0;
+        }
+
+        private void MainListView_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            if (NeedsScroll)
+            {
+                NeedsScroll = false;
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    LoadCurrentFmgScrollOffset();
+                }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+            }
+            else if (!NeedsScroll && context.MainListViewVisibility != Visibility.Visible)
+            {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    context.MainListViewVisibility = Visibility.Visible;
+                }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+            }
+        }
+
+        private void MetroWindow_LostFocus(object sender, RoutedEventArgs e)
+        {
+            Ctrl = false;
+        }
+
+        private void ListViewSource_Filter(object sender, FilterEventArgs e)
+        {
+            if (string.IsNullOrEmpty(context.Config.Filter))
+            {
+                e.Accepted = true;
+                return;
+            }
+
+            var entry = e.Item as FMGEntryRef;
+
+            e.Accepted = entry.Value.IndexOf(context.Config.Filter, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void ButtonApplyFilter_Click(object sender, RoutedEventArgs e)
+        {
+            context.Config.Filter = FilterTextBox.Text;
+
+            CollectionViewSource.GetDefaultView(MainListView.ItemsSource).Refresh();
+        }
+
+        private void ButtonClearFilter_Click(object sender, RoutedEventArgs e)
+        {
+            context.Config.Filter = string.Empty;
+
+            CollectionViewSource.GetDefaultView(MainListView.ItemsSource).Refresh();
+        }
+
+        private void FilterTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Return && FilterTextBox.IsFocused)
+            {
+                context.Config.Filter = FilterTextBox.Text;
+
+                CollectionViewSource.GetDefaultView(MainListView.ItemsSource).Refresh();
+            }
+        }
+
+        private void CmdGoto_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            var gotoWind = new GotoWindow();
+            gotoWind.Owner = this;
+            gotoWind.ShowDialog();
+            var gotoVal = gotoWind.Goto;
+            if (gotoVal >= 0)
+            {
+                var matches = MainListView.Items.Cast<FMGEntryRef>().Where(x => x.ID == gotoVal);
+
+                if (matches.Any())
+                {
+                    var match = matches.First();
+                    MainListView.ScrollIntoView(match);
+                    MainListView.SelectedItem = match;
+                }
+                else
+                {
+                    MessageBox.Show($"No entry found with ID {gotoVal}.");
+                }
+            }
+        }
+
+        private void CmdGoto_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (!CollectionViewSource.GetDefaultView(MainListView.ItemsSource).IsEmpty)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private void MetroWindow_IsKeyboardFocusWithinChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (!IsKeyboardFocusWithin)
+            {
+                Ctrl = false;
+            }
+        }
     }
 }

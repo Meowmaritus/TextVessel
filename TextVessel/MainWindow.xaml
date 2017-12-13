@@ -7,17 +7,33 @@
     xmlns:local="clr-namespace:TextVessel"
     xmlns:Metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
     xmlns:fmg="clr-namespace:MeowDSIO.DataTypes.FMG;assembly=MeowDSIO"
+    xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
+    xmlns:document="clr-namespace:ICSharpCode.AvalonEdit.Document;assembly=ICSharpCode.AvalonEdit"
+    xmlns:AvalonEdit="clr-namespace:ICSharpCode.AvalonEdit"
+    xmlns:editing="clr-namespace:ICSharpCode.AvalonEdit.Editing"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:collections="clr-namespace:System.Collections;assembly=mscorlib"
     mc:Ignorable="d"
     Title="{StaticResource Version}" 
     Width="1200" 
     Height="600"
     ResizeMode="CanResizeWithGrip"
-    Background="#1C1C1C" 
+    Background="{StaticResource Background}" 
     Loaded="MetroWindow_Loaded" 
     Closing="MetroWindow_Closing" 
     Icon="Resources/Soul_Vessel_Sqr.ico"
-    MinWidth="1150"
+    MinWidth="640"
     MinHeight="256"
+    
+    KeyDown="MetroWindow_KeyDown"
+    KeyUp="MetroWindow_KeyUp"
+    
+    LostFocus="MetroWindow_LostFocus"
+    
+    BorderThickness="1"
+    BorderBrush="{StaticResource BorderBrushNormal}"
+    
+    IsKeyboardFocusWithinChanged="MetroWindow_IsKeyboardFocusWithinChanged"
     
         >
 
@@ -28,205 +44,395 @@
             CanExecute="CmdSave_CanExecute"
             Executed="CmdSave_Executed"
             />
+
+        <CommandBinding 
+            x:Name="CmdZoomIn" 
+            Command="NavigationCommands.IncreaseZoom" 
+            Executed="CmdZoomIn_Executed" 
+            />
+
+        <CommandBinding 
+            x:Name="CmdZoomOut" 
+            Command="NavigationCommands.DecreaseZoom" 
+            Executed="CmdZoomOut_Executed"
+            />
+
+        <CommandBinding 
+            x:Name="CmdZoomReset" 
+            Command="NavigationCommands.Zoom" 
+            Executed="CmdZoomReset_Executed"
+            />
+
+        <CommandBinding 
+            x:Name="CmdGoto" 
+            Command="NavigationCommands.GoToPage" 
+            Executed="CmdGoto_Executed"
+            CanExecute="CmdGoto_CanExecute"
+            
+            />
     </Window.CommandBindings>
 
     <Window.InputBindings>
         <KeyBinding Command="ApplicationCommands.Save" Key="S" Modifiers="Ctrl"/>
+        <KeyBinding Command="NavigationCommands.IncreaseZoom" Key="OemPlus" Modifiers="Ctrl"/>
+        <KeyBinding Command="NavigationCommands.DecreaseZoom" Key="OemMinus" Modifiers="Ctrl"/>
+        <KeyBinding Command="NavigationCommands.Zoom" Key="D0" Modifiers="Ctrl"/>
+        <KeyBinding Command="NavigationCommands.GoToPage" Key="G" Modifiers="Ctrl" />
     </Window.InputBindings>
-    
-    <Window.Resources>
-        <Style 
-            x:Key="FmgTabItemStyle"
-            TargetType="{x:Type TabItem}">
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TabItem}">
-                        <Grid Background="{TemplateBinding Background}" SnapsToDevicePixels="true" Height="23">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="25"/>
-                            </Grid.ColumnDefinitions>
-                            <ContentPresenter ContentSource="Header" Margin="10,0,10,0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <ContentPresenter.Resources>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource Foreground}"/>
-                                    </Style>
-                                </ContentPresenter.Resources>
-                            </ContentPresenter>
-                            <Button Grid.Column="1" Height="15" Width="15" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Button.Style>
-                                    <Style TargetType="{x:Type Button}">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="Focusable" Value="False"/>
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="{x:Type Button}">
-                                                    <Grid Background="{TemplateBinding Background}">
-                                                        <Path x:Name="ButtonPath" 
-                                                                Margin="2"
-                                                                Data="M0,0 L1,1 M0,1 L1,0"
-                                                                Stroke="{StaticResource CloseButtonStroke}" 
-                                                                StrokeThickness="2"
-                                                                StrokeStartLineCap="Flat"
-                                                                StrokeEndLineCap="Flat"
-                                                                Stretch="Uniform"
-                                                                VerticalAlignment="Center"
-                                                                HorizontalAlignment="Center"/>
-                                                    </Grid>
-                                                    <ControlTemplate.Triggers>
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TabItem}}" Value="false"/>
-                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=TabItem}}" Value="false"/>
-                                                            </MultiDataTrigger.Conditions>
-                                                            <MultiDataTrigger.Setters>
-                                                                <Setter Property="Visibility" Value="Hidden"/>
-                                                            </MultiDataTrigger.Setters>
-                                                        </MultiDataTrigger>
-                                                        <Trigger Property="IsEnabled" Value="False">
-                                                            <Setter Property="Visibility" Value="Hidden"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="{StaticResource CloseButtonBackgroundHighlighted}" />
-                                                            <Setter TargetName="ButtonPath" Property="Stroke" Value="{StaticResource CloseButtonStrokeHighlighted}"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsPressed" Value="true">
-                                                            <Setter Property="Background" Value="{StaticResource CloseButtonBackgroundPressed}"/>
-                                                            <Setter TargetName="ButtonPath" Property="Stroke" Value="{StaticResource CloseButtonStroke}"/>
-                                                            <Setter TargetName="ButtonPath" Property="Margin" Value="2.5,2.5,1.5,1.5" />
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="false">
-                                <Setter Property="Background" Value="Transparent"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter Property="Background" Value="{StaticResource BorderBrushSelected}"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="true">
-                                <Setter Property="Background" Value="{StaticResource BackgroundSelected}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="FontWeight" Value="Bold"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
 
- 
+    <Window.Resources>
+
+        <local:BoolToVisibilityConverter x:Key="VisibilityConverter"/>
+
+        <SolidColorBrush x:Key="WaitDimColor" Color="#40000000"/>
+
+        <Duration x:Key="WaitAnimDuration">0:0:0.1</Duration>
+
+        <sys:TimeSpan x:Key="WaitAnimOutBeginTime">0:0:0.25</sys:TimeSpan>
+
+        <DataTemplate
+            x:Key="FmgEntryIDTemplate"
+            >
+            <Label 
+                Content="{Binding ID, Mode=OneWay}"
+                Margin="0"
+                Padding="0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                VerticalContentAlignment="Center"
+                Foreground="{StaticResource Foreground}"
+                FontFamily="Times New Roman"
+                FontWeight="Bold"
+                FontSize="16"
+                />
+        </DataTemplate>
+
+        <DataTemplate 
+            x:Key="FmgEntryValueTemplate"
+            >
+            <Grid
+                Margin="2"
+                >
+                <Grid.LayoutTransform>
+                    <ScaleTransform 
+                        ScaleX="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:MainWindow}, Path=DataContext.Zoom.GuiScale}"
+                        ScaleY="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=local:MainWindow}, Path=DataContext.Zoom.GuiScale}"
+                        />
+                </Grid.LayoutTransform>
+
+                <TextBlock
+                    Foreground="{StaticResource Foreground}"
+                    FontFamily="Times New Roman"
+                    FontSize="20"
+                    VerticalAlignment="Center"
+                    TextAlignment="Right"
+                    HorizontalAlignment="Left"
+                    Width="90"
+                    TextOptions.TextFormattingMode="Ideal"
+                    >
+                    <TextBlock Text="{Binding ID, Mode=OneWay}"/><TextBlock 
+                        Text="*" 
+                        Visibility="{Binding IsModified, 
+                        Converter={StaticResource VisibilityConverter}}"/>
+                </TextBlock>
+
+                <local:CodeEditor
+                    Padding="4"
+                    Margin="96,0,0,0"
+                    
+                    BorderBrush="{StaticResource BorderBrushNormal}"
+                    BorderThickness="1"
+                    MyContent="{Binding Value, Mode=TwoWay, 
+                    UpdateSourceTrigger=PropertyChanged}"
+                    VerticalScrollBarVisibility="Disabled"
+                    HorizontalScrollBarVisibility="Auto"
+                    HorizontalAlignment="Stretch"
+                    Background="{StaticResource BackgroundNormal}"
+                                        
+                    Foreground="{StaticResource Foreground}"
+                    SyntaxHighlighting=
+                    "{Binding RelativeSource={RelativeSource Mode=FindAncestor, 
+                    AncestorType=Window}, Path=DataContext.HighlightDef}" 
+                    
+                    LostKeyboardFocus="CodeEditor_LostKeyboardFocus" 
+                    LostFocus="CodeEditor_LostFocus"
+                    
+                    IsTabStop="False"
+                    >
+
+                </local:CodeEditor>
+            </Grid>
+        </DataTemplate>
+
+        <Storyboard 
+            x:Key="StoryboardWaitFade"
+            >
+
+            <DoubleAnimation
+                Storyboard.TargetProperty="WaitAnimProgress"
+                From="0"
+                To="0.5"
+                Duration="{StaticResource WaitAnimDuration}"
+                />
+
+            <DoubleAnimation
+                Storyboard.TargetProperty="WaitAnimProgress"
+                From="0.5"
+                To="1.0"
+                Duration="{StaticResource WaitAnimDuration}"
+                BeginTime="{StaticResource WaitAnimOutBeginTime}"
+                >
+
+            </DoubleAnimation>
+
+        </Storyboard>
+
     </Window.Resources>
-    
+
     <Window.DataContext>
-        <local:MainDataContext x:Name="MAINDATA"/>
+        <local:MainDataContext x:Name="context"/>
     </Window.DataContext>
 
     <Grid>
-        
+
 
         <Grid 
         x:Name="MainGrid" 
-        Margin="0"
+        Margin="8,0,24,0"
         >
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="290" MinWidth="128"/>
+                <ColumnDefinition Width="350" MinWidth="128"/>
                 <ColumnDefinition Width="*" MinWidth="128"/>
             </Grid.ColumnDefinitions>
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="24"/>
+                <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Menu 
-            Name="MainMenu"
-            Grid.Row="0"
-            Grid.Column="0"
-            Grid.ColumnSpan="3"
-            >
-
-                <MenuItem Header="File">
-                    <MenuItem 
-                        Name="MenuSelectDarkSoulsDirectory"
-                        Header="Select Dark Souls Directory..." 
-                        Click="MenuSelectDarkSoulsDirectory_Click"
-                        />
-                    <MenuItem 
-                        x:Name="MenuSaveAll"
-                        Header="Save All"
-                        Command="ApplicationCommands.Save"
-                        />
-                    <MenuItem 
-                        Name="MenuRestoreBackups"
-                        Header="Restore all PARAMBND Backups..." 
-                        Click="MenuRestoreBackups_Click" 
-                        />
-                </MenuItem>
-                <MenuItem 
-                    x:Name="MenuAbout"
-                    Header="By Meowmaritus"
-                    Foreground="PaleGreen"
-                    Background="ForestGreen"
-                    OverridesDefaultStyle="True"
-                    Click="MenuAbout_Click"
+            <Grid.Resources>
+                <CollectionViewSource 
+                    x:Key="MainListViewSource"
+                    Source="{Binding SelectedFMG.Value.Entries}"
+                    Filter="ListViewSource_Filter"
                     />
+            </Grid.Resources>
 
-            </Menu>
+            <Grid
+                Grid.Row="0"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                
+                
+                >
+
+                <Grid.LayoutTransform>
+                    <ScaleTransform
+                        ScaleX="0.43"
+                        ScaleY="0.43"
+                        />
+                </Grid.LayoutTransform>
+
+                <Menu 
+                    Name="MainMenu"
+                    FontFamily="Times New Roman"
+                    FontSize="32 px"
+                    
+                    TextOptions.TextFormattingMode="Ideal"
+                    TextOptions.TextHintingMode="Animated"
+                    
+                    Margin="0"
+                    
+                    >
+
+                    <MenuItem 
+                        Header="File"
+                        Padding="16,8,16,8"
+                        >
+                        <MenuItem 
+                            Name="MenuSelectDarkSoulsDirectory"
+                            Header="Select Dark Souls Directory..." 
+                            Click="MenuSelectDarkSoulsDirectory_Click"
+                            Padding="8"
+                            />
+                        <MenuItem 
+                            x:Name="MenuSaveAll"
+                            Header="Save All"
+                            Command="ApplicationCommands.Save"
+                            IsEnabled="{Binding Config.InterrootPathSelected}"
+                            Padding="8"
+                            />
+                        <MenuItem 
+                            Name="MenuRestoreBackups"
+                            Header="Restore all MSGBND Backups..." 
+                            Click="MenuRestoreBackups_Click" 
+                            IsEnabled="{Binding Config.InterrootPathSelected}"
+                            Padding="8"
+                            />
+                    </MenuItem>
+                    <MenuItem 
+                        Header="Edit"
+                        Padding="16,8,16,8"
+                        >
+                        <MenuItem
+                            x:Name="MenuGoto"
+                            Header="Go To Entry ID..."
+                            Command="NavigationCommands.GoToPage"
+                            Padding="8"
+                            InputGestureText="Ctrl+G"
+                            
+                            />
+                    </MenuItem>
+                    <Separator Padding="8" />
+                    <MenuItem 
+                        x:Name="MenuAbout"
+                        Header="Created By Meowmaritus"
+                        Foreground="PaleGreen"
+                        Click="MenuAbout_Click"
+                        Padding="8"
+                        />
+
+                </Menu>
+
+            </Grid>
+
+
+
+
+
+            <Grid
+                Grid.Column="0"
+                Grid.Row="1"
+                >
+
+
+                <Grid.LayoutTransform>
+                    <ScaleTransform ScaleX="0.75" ScaleY="0.75"/>
+                </Grid.LayoutTransform>
+
+                <Label
+                Content="Language:"
+                Foreground="{StaticResource Foreground}"
+                VerticalAlignment="Center"
+                VerticalContentAlignment="Center"
+                HorizontalContentAlignment="Left"
+                Padding="0"
+                Margin="8"
+                FontFamily="Times New Roman"
+                FontSize="24 px"
+                FontWeight="Bold"
+                />
+
+                <ComboBox
+                    x:Name="DataLanguageListBox"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Foreground="{StaticResource Foreground}"
+                    ItemsSource="{Binding DataLanguageList}"
+                    SelectionChanged="DataLanguageListBox_SelectionChanged"
+                    SelectedItem="{Binding DataLanguage}"
+                    Margin="128,8,8,8"
+                    FontFamily="Times New Roman"
+                    FontSize="24 px"
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextHintingMode="Animated"
+                    IsEnabled="{Binding Config.InterrootPathSelected}"
+                    >
+
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock
+                                Width="300"
+                                >
+                                
+                                <TextBlock 
+                                    Text="{Binding EngName}"
+                                    />
+                                
+                                <TextBlock 
+                                    Text="{Binding NativeNameDispStr}"
+                                    Opacity="0.5"
+                                    />
+                                
+                                
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+
+                </ComboBox>
+
+            </Grid>
+
+
 
             <ScrollViewer
             HorizontalScrollBarVisibility="Disabled"
             VerticalScrollBarVisibility="Auto"
             Grid.Column="0" 
-            Grid.Row="1"
+            Grid.Row="2"
             >
                 <TabControl
-                x:Name="MainTabs"
-                TabStripPlacement="Right"
-                ItemsSource="{Binding FMGs, NotifyOnTargetUpdated=True}"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                Margin="0,0,4,0"
-                HorizontalContentAlignment="Left"
-                VerticalContentAlignment="Center"
-                FontSize="12"
-                ItemContainerStyle="{StaticResource FmgTabItemStyle}" 
-                SelectionChanged="MainTabs_SelectionChanged" TargetUpdated="MainTabs_TargetUpdated"
-                
-                >
+                    x:Name="MainTabs"
+                    TabStripPlacement="Right"
+                    ItemsSource="{Binding FMGs, NotifyOnTargetUpdated=True}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Margin="0,0,4,0"
+                    HorizontalContentAlignment="Left"
+                    VerticalContentAlignment="Center"
+                    ItemContainerStyle="{StaticResource FmgTabItemStyle}" 
+                    SelectionChanged="MainTabs_SelectionChanged" 
+                    TargetUpdated="MainTabs_TargetUpdated"
+                    PreviewMouseDown="MainTabs_PreviewMouseDown"
+                    SelectedItem="{Binding SelectedFMG, Mode=TwoWay}"
+                    >
 
                     <TabControl.ItemTemplate>
                         <DataTemplate>
                             <Grid 
-                            Width="250"
+                            Width="400"
                             >
 
+                                <Grid.LayoutTransform>
+                                    <ScaleTransform ScaleX="0.75" ScaleY="0.75"/>
+                                </Grid.LayoutTransform>
+
                                 <TextBlock 
-                                    Text="{Binding Key}" 
                                     HorizontalAlignment="Left"
-                                    FontSize="12"
-                                    />
-                                <TextBlock 
+                                    Padding="1"
+                                    >
+                                    
+                                    
+                                    
+                                    <TextBlock 
+                                        Text="{Binding TranslatedName}"
+                                        FontFamily="Times New Roman"
+                                        FontSize="24"
+                                        TextOptions.TextFormattingMode="Ideal"
+                                        TextOptions.TextHintingMode="Animated"
+                                        
+                                        /><TextBlock 
+                                        Text="*" 
+                                        Visibility="{Binding Value.IsModified, 
+                                        Converter={StaticResource VisibilityConverter}}"
+                                        FontFamily="Times New Roman"
+                                        FontSize="20"
+                                        TextOptions.TextFormattingMode="Display"
+                                        TextOptions.TextHintingMode="Animated"
+                                        />
+
+                                </TextBlock>
+                                <!--<TextBlock 
                                     Text="{Binding BNDName}"
                                     TextAlignment="Right"
                                     HorizontalAlignment="Right"
-                                    Foreground="White"
-                                    FontSize="9"
+                                    Foreground="{StaticResource Foreground}"
+                                    FontSize="16"
                                     VerticalAlignment="Center"
-                                    FontStyle="Italic"
+                                    FontFamily="Times New Roman"
                                 >
 
                                     <TextBlock.Style>
@@ -241,7 +447,7 @@
                                         </Style>
                                     </TextBlock.Style>
 
-                                </TextBlock>
+                                </TextBlock>-->
                             </Grid>
                         </DataTemplate>
                     </TabControl.ItemTemplate>
@@ -255,176 +461,276 @@
                 </TabControl>
             </ScrollViewer>
 
-            <DataGrid
+            <Grid
                 Grid.Column="1"
                 Grid.Row="1"
-                Background="#1C1C1C"
+                Grid.RowSpan="2"
                 
-                ItemsSource="{Binding ElementName=MainTabs, 
-                Path=SelectedItem.Value.Entries}"
+                VerticalAlignment="Top"
+                Height="72"
                 
-                ScrollViewer.CanContentScroll="False"
-                
-                Focusable="False"
-                
-                FocusVisualStyle="{x:Null}"
-                
-                VirtualizingPanel.IsVirtualizing="True"
-                VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                
-                AutoGenerateColumns="False"
+                Margin="8"
                 >
 
-                <!--<DataGrid.ItemContainerStyle>
+                <Grid.LayoutTransform>
+                    <ScaleTransform ScaleX="0.7" ScaleY="0.7"/>
+                </Grid.LayoutTransform>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="150"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="24"/>
+                    <RowDefinition Height="48"/>
+                </Grid.RowDefinitions>
+
+                <Label
+                    Padding="0"
+                    
+                    Grid.Row="0"
+                    Grid.Column="0"
+                
+                    Foreground="{StaticResource Foreground}"
+                
+                    Content="Current Filter:"
+                    VerticalContentAlignment="Center"
+                
+                    FontFamily="Times New Roman"
+                    FontSize="24 px"
+                
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextHintingMode="Animated"
+                
+                    />
+
+                <Label
+                    Padding="0"
+                    
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Grid.ColumnSpan="3"
+                
+                    Content="{Binding Config.FilterDispStr, Mode=OneWay}"
+                    VerticalContentAlignment="Center"
+                
+                    FontFamily="Times New Roman"
+                    FontSize="24 px"
+                
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextHintingMode="Animated"
+                
+                    >
+
+                    <Label.Style>
+                        <Style TargetType="{x:Type Label}">
+                            <Setter Property="Foreground" Value="{StaticResource BorderBrushSelected}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Config.Filter, Mode=OneWay}" Value="">
+                                    <Setter Property="Foreground" Value="{StaticResource Foreground}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Label.Style>
+                    
+                </Label>
+
+                <TextBox
+                    x:Name="FilterTextBox"
+                    
+                    VerticalAlignment="Stretch"
+                    
+                    VerticalContentAlignment="Center"
+                    
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    
+                    Margin="4"
+                
+                    FontFamily="Times New Roman"
+                    FontSize="24 px"
+                    
+                    Padding="8,0,8,0"
+                    
+                    Focusable="True"
+                    
+                    IsTabStop="True"
+                    TabIndex="0"
+                    
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextHintingMode="Animated"
+                    
+                    KeyDown="FilterTextBox_KeyDown"
+                    
+                    />
+
+                <Button
+                    x:Name="ButtonApplyFilter"
+                    Click="ButtonApplyFilter_Click"
+                    
+                    FontFamily="Times New Roman"
+                    FontSize="24 px"
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextHintingMode="Animated"
+                    
+                    Content="Apply Filter"
+                    
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    
+                    VerticalContentAlignment="Center"
+                    
+                    Margin="4"
+                    
+                    IsTabStop="True"
+                    TabIndex="1"
+                    />
+
+                <Button
+                    x:Name="ButtonClearFilter"
+                    Click="ButtonClearFilter_Click"
+                    
+                    FontFamily="Times New Roman"
+                    FontSize="24 px"
+                    TextOptions.TextFormattingMode="Display"
+                    TextOptions.TextHintingMode="Animated"
+                    
+                    Content="Clear Filter"
+                    
+                    Grid.Row="1"
+                    Grid.Column="3"
+                    
+                    VerticalContentAlignment="Center"
+                    
+                    Margin="4"
+                    
+                    IsTabStop="True"
+                    TabIndex="2"
+                    />
+
+            </Grid>
+
+
+
+            <ListView
+                
+                Margin="4,64,4,4"
+                
+                Grid.Column="1"
+                Grid.Row="1"
+                Grid.RowSpan="2"
+                
+                x:Name="MainListView"
+            
+                ItemsSource="{Binding Source={StaticResource MainListViewSource}, NotifyOnTargetUpdated=True}"
+            
+                Background="{StaticResource LightBackground}"
+            
+                ItemTemplate="{StaticResource FmgEntryValueTemplate}"
+            
+            
+                VirtualizingPanel.IsVirtualizing="True"
+                VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                VirtualizingPanel.VirtualizationMode="Recycling"
+            
+                VirtualizingPanel.ScrollUnit="Pixel"
+                
+                BorderThickness="0"
+            
+                TargetUpdated="MainListView_TargetUpdated"
+                
+                PreviewMouseWheel="MainListView_PreviewMouseWheel"
+                
+                TextOptions.TextFormattingMode="Display"
+                TextOptions.TextHintingMode="Animated" 
+                
+                Visibility="{Binding MainListViewVisibility}" 
+                
+                ScrollViewer.ScrollChanged="MainListView_ScrollChanged"
+                >
+
+                <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="Focusable" Value="false"/>
                         <Setter Property="IsSelected" Value="False"/>
                     </Style>
-                </DataGrid.ItemContainerStyle>-->
+                </ListView.ItemContainerStyle>
 
-                <DataGrid.Columns>
-                    <DataGridTemplateColumn>
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock>
-                                    <Label 
-                                        Content="{Binding ID, Mode=OneWay}"
-                                        Margin="4"
-                                        Padding="0"
-                                        Height="20"
-                                        VerticalAlignment="Top"
-                                        VerticalContentAlignment="Top"
-                                        Foreground="White"
-                                        FontWeight="Normal"
-                                        />
-                                    <TextBox 
-                                        Text="{Binding Value}"
-                                        Margin="4"
-                                        Padding="2"
-                                        BorderBrush="White"
-                                        FontWeight="Normal"
-                                        />
-                                </TextBlock>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-
-            </DataGrid>
+            </ListView>
             
-            <TreeView
-                Visibility="Collapsed"
-                x:Name="FmgTreeView"
-                Grid.Column="1"
-                Grid.Row="1"
-                ItemsSource="{Binding ElementName=MainTabs, 
-                Path=SelectedItem.Value.Chunks}"
-                Background="#1C1C1C"
-                FocusVisualStyle="{x:Null}"
-                Focusable="False"
-                
-                >
+            <Grid.Effect>
+                <BlurEffect 
+                    x:Name="Blur_MainGrid"
+                    Radius="{Binding WaitBlurRadius}"
+                    RenderingBias="Quality"
+                    />
+            </Grid.Effect>
 
-                <TreeView.ItemTemplate>
-                    <DataTemplate>
-                        <TreeViewItem
-                            ItemsSource="{Binding Entries}"
-                            Foreground="White"
-                            Focusable="False"
-                            Header="{Binding}"
-                            FontWeight="Bold"
-                            >
-
-                            <TreeViewItem.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock>
-                                        <Label 
-                                            Content="{Binding ID, Mode=OneWay}"
-                                            Margin="4"
-                                            Padding="0"
-                                            Height="20"
-                                            VerticalAlignment="Top"
-                                            VerticalContentAlignment="Top"
-                                            Foreground="White"
-                                            FontWeight="Normal"
-                                            />
-                                        <TextBox 
-                                            Text="{Binding Value}"
-                                            Margin="4"
-                                            Padding="2"
-                                            BorderBrush="White"
-                                            FontWeight="Normal"
-                                            />
-                                    </TextBlock>
-                                </DataTemplate>
-                            </TreeViewItem.ItemTemplate>
-
-                        </TreeViewItem>
-                    </DataTemplate>
-                </TreeView.ItemTemplate>
-
-            </TreeView>
-            
         </Grid>
 
-        <TextBlock
-            Name="LoadingTextBox"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            TextAlignment="Center"
-            Foreground="White"
-            Visibility="Collapsed"
-            IsHitTestVisible="False"
+        <Label
+            Content="{Binding WaitText}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Foreground="{StaticResource Foreground}"
+            Background="{StaticResource WaitDimColor}"
+            IsHitTestVisible="{Binding IsWait}"
+            FontSize="24 px"
+            FontFamily="{StaticResource Soul_Font}"
+            Opacity="{Binding WaitOverlayOpacity}"
             >
-            <TextBlock.BitmapEffect>
+            <Label.BitmapEffect>
                 <DropShadowBitmapEffect 
                     Color="Black"
-                    ShadowDepth="6"
+                    ShadowDepth="3"
                     Opacity="1"
-                    Softness="0.25"
+                    Softness="0.15"
                     
                     />
-            </TextBlock.BitmapEffect>
-                <Run 
-                    Text="Initializing GUI elements..."
-                    FontSize="24"
-                    />
-                <LineBreak/>
-                <Run 
-                    Text="This may take 10 seconds or more."
-                    FontSize="12"
-                    />
-        </TextBlock>
-
-        <TextBlock
-            Name="SavingTextBox"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            TextAlignment="Center"
-            Foreground="White"
-            Visibility="Collapsed"
-            IsHitTestVisible="False"
-            >
-            <TextBlock.BitmapEffect>
-                <DropShadowBitmapEffect 
-                    Color="Black"
-                    ShadowDepth="6"
-                    Opacity="1"
-                    Softness="0.25"
-                    
-                    />
-            </TextBlock.BitmapEffect>
-                <Run 
-                    Text="Saving all PARAMBNDs..."
-                    FontSize="24"
-                    />
-                <LineBreak/>
-                <Run 
-                    Text="This should only take a couple of seconds."
-                    FontSize="12"
-                    />
-        </TextBlock>
+            </Label.BitmapEffect>
+        </Label>
     </Grid>
-    
-    
+
+    <Metro:MetroWindow.Style>
+        <Style 
+            TargetType="{x:Type Metro:MetroWindow}" 
+            BasedOn="{StaticResource {x:Type Metro:MetroWindow}}"
+            >
+
+            <Style.Triggers>
+
+                <DataTrigger Binding="{Binding IsWait}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard Name="WaitFade" Storyboard="{StaticResource StoryboardWaitFade}"/>
+                    </DataTrigger.EnterActions>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding WaitAnimSecondHalf}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <PauseStoryboard BeginStoryboardName="WaitFade"/>
+                    </DataTrigger.EnterActions>
+                </DataTrigger>
+
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding WaitAnimSecondHalf}" Value="True"/>
+                        <Condition Binding="{Binding IsWait}" Value="False"/>
+                    </MultiDataTrigger.Conditions>
+
+                    <MultiDataTrigger.EnterActions>
+                        <ResumeStoryboard BeginStoryboardName="WaitFade"/>
+                    </MultiDataTrigger.EnterActions>
+                </MultiDataTrigger>
+
+            </Style.Triggers>
+
+        </Style>
+    </Metro:MetroWindow.Style>
+
 </Metro:MetroWindow>

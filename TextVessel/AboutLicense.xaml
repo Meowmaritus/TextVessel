@@ -1,0 +1,34 @@
+﻿<controls:MetroWindow
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls" x:Class="TextVessel.AboutLicense"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TextVessel"
+        mc:Ignorable="d"
+        Title="License" Height="320" Width="640" ResizeMode="CanResize" Activated="MetroWindow_Activated" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+    BorderThickness="1"
+    BorderBrush="{StaticResource BorderBrushNormal}"
+    
+    >
+    <Grid>
+        <WebBrowser 
+            x:Name="HtmlView" 
+            Margin="8,8,8,40"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            ScrollViewer.HorizontalScrollBarVisibility="Visible"
+            ScrollViewer.VerticalScrollBarVisibility="Visible"
+            />
+        <Button
+            x:Name="OkButton"
+            Content="OK"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Width="64"
+            Height="24"
+            Margin="8"
+            Click="OkButton_Click"
+            />
+    </Grid>
+</controls:MetroWindow>
